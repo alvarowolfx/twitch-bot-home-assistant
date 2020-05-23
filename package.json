@@ -1,0 +1,23 @@
+{
+  "name": "twitch-hassio-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "commander": "^5.1.0",
+    "fastify": "^2.14.1",
+    "dotenv": "^8.2.0",
+    "fs-extra": "^9.0.0",
+    "open": "^7.0.4",
+    "terminal-link": "^2.1.1",
+    "twitch-chat-client": "^4.0.10",
+    "twitch": "^4.0.10",
+    "twitch-pubsub-client": "^4.0.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alvaro Viebrantz",
+  "license": "ISC"
+}
