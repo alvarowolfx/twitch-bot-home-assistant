@@ -1,21 +1,21 @@
 require('dotenv').config()
 
+const { program } = require('commander')
 const { startBot, startPubSub } = require('./bot')
 const { handleSetupBot, handleSetupPubSub } = require('./setup')
 
-const { program } = require('commander')
 
 program
   .command('setup-pubsub')
-  .action( handleSetupPubSub )
+  .action(handleSetupPubSub)
 
 program
   .command('setup-bot')
-  .action( handleSetupBot )
+  .action(handleSetupBot)
 
 program
   .command('start')
-  .action( () => {
+  .action(() => {
     startBot()
     startPubSub()
   })
