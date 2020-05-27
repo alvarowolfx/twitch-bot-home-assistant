@@ -9,7 +9,7 @@ const fs = require('fs-extra')
 const config = require('./config')
 
 const botScope = 'chat:read+chat:edit'
-const pubSubScope = 'channel:read:redemptions+channel_subscriptions+bits:read'
+const pubSubScope = 'channel:read:redemptions+channel_subscriptions+bits:read+moderation:read'
 const redirectURI = `http://localhost:${config.port}`
 const twitchIdApi = 'https://id.twitch.tv/oauth2'
 

@@ -9,6 +9,12 @@ const { changeColorRewardId, ledStripEntityId, ledBulbId } = config
  * @type ChatClient
  */
 let chatClient
+let moderatorsMap = {}
+
+
+function isMod(user) {
+  return !!moderatorsMap[user]
+}
 
 function isOwner(user) {
   return user === config.channelId
@@ -30,19 +36,26 @@ async function startBot() {
       chatClient.say(channel, `@${user} rolled a ${diceRoll}`)
     }
 
-    if (msg.startsWith('!color')) {
-      if (isOwner(user)) {
+    if (msg.startsWith('!color ')) {
+      if (isOwner(user) || isMod(user)) {
         const [, color] = msg.split(' ')
         await setColor(ledStripEntityId, color)
       } else {
-        chatClient.say(channel, `Só o ${config.channelId} pode usar esse comando.`)
+        chatClient.say(channel, `Só o ${config.channelId} e moderadores podem usar esse comando.`)
       }
+    }
+
+    if (user === 'streamlabs' && msg.startsWith('Obrigado pelo follow')) {
+      await Promise.all([
+        flashColors(ledStripEntityId, ['gold', 'purple']),
+        flashColors(ledBulbId, ['gold', 'purple'], 2, 500),
+      ])
     }
 
     if (msg === '!newfollower' && isOwner(user)) {
       await Promise.all([
-        flashColors(ledStripEntityId, ['gold', 'purple']),
-        flashColors(ledBulbId, ['gold', 'purple'], 2, 500),
+        flashColors(ledStripEntityId, ['hotpink', 'aliceblue'], 20, 250),
+        flashColors(ledBulbId, ['hotpink', 'aliceblue'], 2, 500),
       ])
     }
   })
@@ -54,13 +67,23 @@ async function startPubSub() {
   const twitchClient = await config.getTwitchClientFromFile(filename)
 
   const channelUser = await twitchClient.helix.users.getUserByName(config.channelId)
-  console.log('user', channelUser.id)
+  console.log('user', channelUser.id, channelUser.type)
   const channel = await twitchClient.kraken.channels.getChannel(channelUser)
   console.log('channel followers', channel.followers)
+
+  const moderators = await twitchClient.helix.moderation.getModerators(channel)
+  moderatorsMap = moderators.data.reduce((acc, mod) => {
+    acc[mod.userName] = true
+    acc[mod.userId] = true
+    return acc
+  }, {})
 
   const pubSubClient = new BasicPubSubClient()
   await pubSubClient.connect()
   await pubSubClient.listen(`channel-points-channel-v1.${channel.id}`, tokenData.accessToken, 'channel:read:redemptions')
+
+  const subscriptionTopic = `channel-subscribe-events-v1.${channel.id}`
+  await pubSubClient.listen(subscriptionTopic, tokenData.accessToken, 'channel_subscriptions')
 
   /* pubSubClient.onPong( () => {
     console.log('Pong')
@@ -70,21 +93,35 @@ async function startPubSub() {
     console.log('Connected')
   })
 
+
   pubSubClient.onMessage(async (topic, message) => {
     const { type, data } = message
+
+    console.log(JSON.stringify(message))
     if (type === 'reward-redeemed') {
       const { redemption } = data
       const { reward, user, user_input: userInput } = redemption
+
       if (reward.id === changeColorRewardId) {
-        chatClient.say(config.channelId, ` @${user.display_name} pediu pra trocar fita de led para "${userInput}".`)
+        chatClient.say(config.channelId,
+          `@${user.display_name} pediu pra trocar fita de led para "${userInput}".`)
         try {
           await setColor(ledStripEntityId, userInput)
-          chatClient.say(config.channelId, ` @${user.display_name} mudamos a cor da fita de led, obrigado por interagir com a live.`)
+          chatClient.say(config.channelId,
+            `@${user.display_name} mudamos a cor da fita de led, obrigado por interagir com a live.`)
         } catch (err) {
           console.log('Erro mudando cor', err)
-          chatClient.say(config.channelId, ` @${user.display_name} Você mandou uma cor inválida, as cores devem seguir o mesmo formato usado pelo CSS.`)
+          chatClient.say(config.channelId,
+            `@${user.display_name} Você mandou uma cor inválida, as cores devem seguir o mesmo formato usado pelo CSS.`)
         }
       }
+    }
+
+    if (subscriptionTopic === topic) {
+      await Promise.all([
+        flashColors(ledStripEntityId, ['hotpink', 'aliceblue'], 20, 250),
+        flashColors(ledBulbId, ['hotpink', 'aliceblue'], 2, 500),
+      ])
     }
   })
 }

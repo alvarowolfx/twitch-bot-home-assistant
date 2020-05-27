@@ -50,7 +50,7 @@ async function setColor(entityId, color) {
   return json
 }
 
-async function flashColors(entityId, colors, times = 6, interval = 300) {
+async function flashColors(entityId, colors, times = 15, interval = 300) {
   const oldColor = await getColor(entityId)
   const [oddColor, evenColor] = colors
   const arr = new Array(times).fill(0).map((_, i) => i)
